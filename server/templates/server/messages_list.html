@@ -1,0 +1,12 @@
+{% extends 'server/base.html' %}
+{% block title %}Информация о рассылках{% endblock %}
+
+{% block content %}
+{% include 'server/header.html' %}
+<h2 class="mb-4">Статистика рассылок</h2>
+<ul class="list-group">
+  <li>Всего рассылок: {{ total_mailings }}</li>
+  <li>Активных рассылок: {{ active_mailings }}</li>
+  <li>Всего получателей: {{ total_recipients }}</li>
+</ul>
+{% endblock %}
