@@ -1,0 +1,15 @@
+{% extends 'server/base.html' %}
+
+{% block title %}Редактировать рассылку{% endblock %}
+
+{% block content %}
+{% include 'server/header.html' %}
+<h2>{{ view.title }}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{% url 'server:message_list' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'server/base.html' %}
+{% block title%}Информация о получателе{% endblock%}
+
+{% block content %}
+{% include 'server/header.html' %}
+
+
+<p>Имя: {{ object.first_name }} </p>
+<p>Фамилия: {{ object.last_name }}</p>
+<p>Email: {{ object.email }}</p>
+<p>Комментарий: {{ object.comment }}</p>
+<a href="{% url 'server:recipient_update' object.pk %}" class="btn btn-secondary">Редактировать</a>
+<a href="{% url 'server:recipient_confirm_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+<a href="{% url 'server:recipient_list' %}" class="btn btn-primary">Вернуться к списку</a>
+{% endblock %}

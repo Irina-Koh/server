@@ -1,0 +1,14 @@
+{% extends 'server/base.html' %}
+{% block title %}Список получателей{% endblock %}
+
+{% block content %}
+{% include 'server/header.html' %}
+
+<p>Время: {{ object.attempt_time }} </p>
+<p>Кому: {{ object.recipients.email }}</p>
+<p>Ответ сервера: {{ object.server_response }}</p>
+<p>Статус: {{ object.status }}</p>
+<a href="{% url 'server:mailing_update' object.pk %}" class="btn btn-secondary">Редактировать</a>
+<a href="{% url 'server:mailing_confirm_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+<a href="{% url 'server:mailing_list' %}" class="btn btn-primary">Вернуться к списку</a>
+{% endblock %}

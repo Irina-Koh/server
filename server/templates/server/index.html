@@ -1,0 +1,38 @@
+{% extends 'server/base.html' %}
+{% block title %}Информация о рассылках{% endblock %}
+
+{% block content %}
+{% include 'server/header.html' %}
+
+   <!-- Блок "Всего рассылок" -->
+<div class="col-md-4 mb-4">
+    <div class="card text-white bg-primary h-100">
+        <div class="card-body d-flex flex-column">
+            <h5 class="card-title">Всего рассылок</h5>
+            <p class="display-4">{{ total_mailings }}</p>
+            <!-- ТЕПЕРЬ ССЫЛКА ВЕРНАЯ -->
+            <a href="{% url 'server:mailing_list' %}" class="btn btn-light mt-auto">Посмотреть список</a>
+        </div>
+    </div>
+</div>
+
+<!-- Блок "Активных рассылок" -->
+<div class="col-md-4 mb-4">
+    <div class="card text-white bg-success h-100">
+        <div class="card-body d-flex flex-column">
+            <h5 class="card-title">Активных рассылок</h5>
+            <p class="display-4">{{ active_mailings }}</p>
+            <a href="{% url 'server:mailing_list' %}?status=Запущена" class="btn btn-dark mt-auto">Показать активные</a>
+        </div>
+    </div>
+</div>
+<div class="col-md-4 mb-4">
+    <div class="card text-white bg-success h-100">
+        <div class="card-body d-flex flex-column">
+            <h5 class="card-title">Количество получателей</h5>
+            <p class="display-4">{{ total_recipients }}</p>
+            <a href="{% url 'server:recipient_list' %}" class="btn btn-dark mt-auto">Показать</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

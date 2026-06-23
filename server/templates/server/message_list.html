@@ -1,0 +1,14 @@
+{% extends 'server/base.html' %}
+{% block title %}Список рассылок{% endblock %}
+
+{% block content %}
+{% include 'server/header.html' %}
+<h2 class="mb-4">Список рассылок</h2>
+<ul class="list-group">
+    {% for message in messages %}
+        <li class="list-group-item">
+            <a href="{% url  'server:message_detail' message.pk %}">{{ message.subject }}</a>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

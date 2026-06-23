@@ -1,0 +1,14 @@
+{% extends 'server/base.html' %}
+{% block title %}Список получателей{% endblock %}
+
+{% block content %}
+{% include 'server/header.html' %}
+<h2 class="mb-4">Список получателей</h2>
+<ul class="list-group">
+    {% for recipient in recipients %}
+        <li class="list-group-item">
+            <a href="{% url  'server:recipient_detail' recipient.pk %}">{{ recipient.email }} - {{ recipient.first_name}} {{ recipient.last_name }}  </a>
+        </li>
+    {% endfor %}
+</ul>
+{% endblock %}

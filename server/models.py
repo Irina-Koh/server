@@ -1,15 +1,11 @@
-from datetime import timezone
-from django.db import models
+from django.db import models, transaction
 from django.core.mail import send_mail
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
-# Create your models here.
+
 class Recipient(models.Model):
-    email = models.EmailField(
-        unique=True,
-        verbose_name='Email'
-    )
+    email = models.EmailField(unique=True, verbose_name='Email')
     first_name = models.CharField(
         max_length=100,
         verbose_name='Имя',
@@ -29,7 +25,6 @@ class Recipient(models.Model):
         help_text='Дополнительная информация о получателе'
     )
 
-
     def __str__(self):
         return self.email
 
@@ -39,26 +34,22 @@ class Recipient(models.Model):
 
 
 class Message(models.Model):
-    topic = models.CharField(
-        max_length=200,
-        verbose_name='Тема письма',
-        help_text='Введите тему письма'
-    )
-    body = models.TextField(
-        verbose_name='Текст письма',
-        help_text='Введите текст письма'
-    )
+    subject = models.CharField(max_length=200, verbose_name='Тема письма', help_text='Введите тему письма')
+    body = models.TextField(verbose_name='Текст письма', help_text='Введите текст письма')
 
     def __str__(self):
-        return self.topic
+        return self.subject
 
     class Meta:
         verbose_name = 'Сообщение'
         verbose_name_plural = 'Сообщения'
 
 
+# --- Модели для управления рассылками ---
+
 class MailingAttempt(models.Model):
     mailing = models.ForeignKey('Mailing', on_delete=models.CASCADE, related_name='attempts')
+    recipient = models.ForeignKey(Recipient, on_delete=models.SET_NULL, null=True)
     attempt_time = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, choices=[
         ('Успешно', 'Успешно'),
@@ -66,6 +57,9 @@ class MailingAttempt(models.Model):
     ])
     server_response = models.TextField(blank=True)
 
+    class Meta:
+        verbose_name = 'Попытка отправки'
+        verbose_name_plural = 'Попытки отправки'
 
 
 class Mailing(models.Model):
@@ -90,47 +84,57 @@ class Mailing(models.Model):
             raise ValidationError("Дата начала должна быть раньше даты окончания.")
 
     def update_status(self):
-        """Динамическое обновление статуса и сохранение в БД."""
-        now = timezone.now()
-        if self.start_time > now:
-            new_status = 'Создана'
-        elif self.start_time <= now <= self.end_time:
-            new_status = 'Запущена'
-        else:
-            new_status = 'Завершена'
-
-        if self.status != new_status:
-            self.status = new_status
-            self.save(update_fields=['status'])
-
-    def send_messages(self):
         """
-        Метод для запуска рассылки.
+        Динамическое обновление статуса рассылки.
+        Этот метод НЕ сохраняет объект автоматически, он только меняет атрибут.
+        Сохранение следует вызывать отдельно, если статус изменился.
+        """
+
+        # Динамический статус (рекомендуется вычислять при каждом обращении)
+        @property
+        def current_status(self):
+            """Вычисляет текущий статус рассылки."""
+            now = timezone.now()
+            if now < self.start_time:
+                return 'Создана'
+            elif self.start_time <= now <= self.end_time:
+                return 'Запущена'
+            else:
+                return 'Завершена'
+
+    @transaction.atomic
+    def process_manual_start(self):
+        """
+        Ручной запуск рассылки.
         Создает записи о попытках отправки для каждого получателя.
         """
-        
-
         if not (self.start_time <= timezone.now() <= self.end_time):
-            raise Exception("Рассылка не может быть запущена: текущее время вне окна отправки.")
+            raise Exception("Рассылку нельзя запустить вручную вне временного окна.")
 
+        attempts = []
         for recipient in self.recipients.all():
             try:
                 send_mail(
                     self.message.subject,
                     self.message.body,
-                    'Rakhmankulova1991@ya.ru',  # Укажите свой адрес отправителя в settings.py (DEFAULT_FROM_EMAIL)
+                    'Rakhmankulova1991@ya.ru',
                     [recipient.email],
                     fail_silently=False,
                 )
-                MailingAttempt.objects.create(
+                attempts.append(MailingAttempt(
                     mailing=self,
+                    recipient=recipient,
                     status='Успешно',
                     server_response='Письмо отправлено успешно'
-                )
+                ))
             except Exception as e:
-                MailingAttempt.objects.create(
+                attempts.append(MailingAttempt(
                     mailing=self,
-                    status='Не успешно',
+                    recipient=recipient,
+                    status='Ошибка',
                     server_response=str(e)
-                )
+                ))
 
+        # Сохраняем все попытки одной операцией БД
+        if attempts:
+            MailingAttempt.objects.bulk_create(attempts)
