@@ -1,0 +1,19 @@
+{% extends 'server/base.html' %}
+{% block title %}Список получателей{% endblock %}
+
+{% block content %}
+{% include 'server/header.html' %}
+<h1>Список рассылок</h1>
+<ul>
+{% for mailing in mailings %}
+    <li>
+        <a href="{% url 'server:mailing_attempt_detail' mailingAttempt.pk %}">
+            Рассылка "{{ mailingAttempt.message.subject }}"
+            (Статус: {{ mailingAttempt.status }})
+        </a>
+    </li>
+{% empty %}
+    <li>Нет доступных рассылок.</li>
+{% endfor %}
+</ul>
+{% endblock %}
